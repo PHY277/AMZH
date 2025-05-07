@@ -63,7 +63,7 @@ def final_function(L_deg, L_min, R_deg, R_min,
     if return_errors:
         return final_deg, wavelength, angle_error_deg, wavelength_error
     else:
-        return final_deg, wavelength  # <-- same as your current code expects!
+        return final_deg, wavelength  
 
 print('\n(Color, line number): (degree (°),wavelength (nm))')
 print('\nHydrogen:')
