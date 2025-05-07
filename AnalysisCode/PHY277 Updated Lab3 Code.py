@@ -1,4 +1,7 @@
 import math
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.optimize import curve_fit
 
 # function for turning arc mins into degrees
 def degrees_arcmins(degrees, arcmins):
@@ -58,6 +61,71 @@ def final_function(L_deg, L_min, R_deg, R_min,
         return final_deg, wavelength, angle_error_deg, wavelength_error
     else:
         return final_deg, wavelength  
+
+# Setup n_low and n_up values (Balmer series)
+n_low = 2
+n_up_values = np.array([3, 4, 5])  # Red, Cyan/Green, Blue
+
+# Compute x-axis values (1/n_low^2 - 1/n_up^2)
+x_values = 1 / n_low**2 - 1 / n_up_values**2
+
+# Your Rotate Left measured wavelengths (in nm) and errors
+wavelengths_left = np.array([643.87, 485.35, 434.77])  # nm
+errors_left = np.array([0.62, 0.62, 0.62])  # nm
+
+# Your Rotate Right measured wavelengths (in nm) and errors
+wavelengths_right = np.array([644.08, 485.57, 435.02])  # nm
+errors_right = np.array([0.62, 0.62, 0.62])  # nm
+
+# Convert wavelengths to 1/m and calculate errors
+def wavelength_to_inverse(wavelength_nm, error_nm):
+    wavelength_m = wavelength_nm * 1e-9
+    inverse_lambda = 1 / wavelength_m
+    inverse_lambda_err = error_nm * 1e-9 / wavelength_m**2
+    return inverse_lambda, inverse_lambda_err
+
+inv_left, inv_left_err = wavelength_to_inverse(wavelengths_left, errors_left)
+inv_right, inv_right_err = wavelength_to_inverse(wavelengths_right, errors_right)
+
+#  Define a linear model for curve fitting
+def linear(x, R):
+    return R * x
+
+# Fit and plot for Rotate Left
+popt_left, pcov_left = curve_fit(linear, x_values, inv_left, sigma=inv_left_err, absolute_sigma=True)
+R_left = popt_left[0]
+R_left_err = np.sqrt(np.diag(pcov_left))[0]
+
+plt.errorbar(x_values, inv_left, yerr=inv_left_err, fmt='o', label='Rotate Left data', color='blue')
+plt.plot(x_values, linear(x_values, *popt_left), '-', label=f'Fit: R = ({R_left:.2e} ± {R_left_err:.2e}) m⁻¹', color='navy')
+plt.xlabel(r'$1/n_{low}^2 - 1/n_{up}^2$')
+plt.ylabel(r'$1/\lambda$ (m⁻¹)')
+plt.title('Hydrogen Rotate Left: Rydberg Constant')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+# Fit and plot for Rotate Right
+popt_right, pcov_right = curve_fit(linear, x_values, inv_right, sigma=inv_right_err, absolute_sigma=True)
+R_right = popt_right[0]
+R_right_err = np.sqrt(np.diag(pcov_right))[0]
+
+plt.errorbar(x_values, inv_right, yerr=inv_right_err, fmt='o', label='Rotate Right data', color='green')
+plt.plot(x_values, linear(x_values, *popt_right), '-', label=f'Fit: R = ({R_right:.2e} ± {R_right_err:.2e}) m⁻¹', color='darkgreen')
+plt.xlabel(r'$1/n_{low}^2 - 1/n_{up}^2$')
+plt.ylabel(r'$1/\lambda$ (m⁻¹)')
+plt.title('Hydrogen Rotate Right: Rydberg Constant')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+# Print out results
+print(f"Rotate Left Experimental Rydberg Constant: ({R_left:.2e} ± {R_left_err:.2e}) m⁻¹")
+print(f"Rotate Right Experimental Rydberg Constant: ({R_right:.2e} ± {R_right_err:.2e}) m⁻¹")
+
+# Reference value for comparison
+R_true = 1.097373e7  # m⁻¹
+print(f"Accepted Rydberg Constant: {R_true:.2e} m⁻¹")
 
 print('\n(Color, line number): (degree (°),wavelength (nm))')
 print('\nHydrogen:')
